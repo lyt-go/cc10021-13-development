@@ -116,6 +116,21 @@ class MdmEntityService(BaseModuleService):
                 "abnormal": False,
             })
 
+    def dispatch_validation_by_attribution(self, group: str) -> dict[str, Any]:
+        """主数据校验派发：按事件归属记录返回该责任组可见字段与可认领处置项。"""
+        from app.services.dq_incident_attribution import DqIncidentAttributionService
+
+        return DqIncidentAttributionService().dispatch_mdm_validation(group)
+
+    def crosscheck_attributions(self, entity_name: str | None = None) -> list[dict[str, Any]]:
+        """主数据联查清单：读取归属服务同步过来的事件归属结论。"""
+        from app.services.dq_incident_attribution import DqIncidentAttributionService
+
+        rows = DqIncidentAttributionService().crosscheck()
+        if entity_name:
+            rows = [row for row in rows if row.get("表名") == entity_name]
+        return rows
+
     def validate_entity_consistency(self, entity_id: int) -> dict[str, Any]:
         """校验实体数据一致性：检查字段定义与表目录中实际schema的一致性。"""
         entity = store.find(self.MODULE, entity_id)

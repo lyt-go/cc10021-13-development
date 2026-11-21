@@ -200,6 +200,17 @@ export const MODULES: ModuleMeta[] = [
     actionTargets: {"标记下降": "下降趋势", "标记需关注": "需关注", "标记已改善": "已改善"},
     metrics: ["趋势记录总数", "下降趋势记录", "需关注记录"],
   },
+  {
+    key: "dq_incident_attribution",
+    name: "质量事件归属",
+    entity: "归属记录",
+    desc: "按表字段身份把质量事件归属到业务域和责任组，派发各组的字段与可认领处置项。",
+    fields: ["归属编号", "事件编号", "表名", "字段名", "业务域", "责任组", "归属状态", "认领状态"],
+    statuses: ["待复核", "已归属", "已认领", "已处置", "已调整"],
+    actions: [],
+    actionTargets: {},
+    metrics: ["归属记录总数", "待复核记录", "已认领记录"],
+  },
 ]
 
 export const MODULE_BY_KEY: Map<string, ModuleMeta> = new Map(

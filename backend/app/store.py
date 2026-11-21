@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.seed_scenario import SCENARIO_ROWS
 
 
 class Store:
@@ -14,6 +15,11 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        # 归属场景数据单独放一份，避免把“共享表 + 历史规则编号”的业务背景
+        # 混进通用样例里；两边模块 key 相同，按行追加即可。
+        for name, rows in SCENARIO_ROWS.items():
+            target = self._tables.setdefault(name, [])
+            target.extend(dict(row) for row in rows)
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)

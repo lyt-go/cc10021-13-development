@@ -25,6 +25,15 @@ class DqReportService(BaseModuleService):
     ACTION_RULES = {"生成报告": "生成中", "确认完成": "已完成", "归档报告": "已归档"}
     NEGATIVE_ACTIONS = []
 
+    def incident_attribution_report(self, group: str | None = None) -> dict[str, Any]:
+        """按事件归属记录生成日报：同一事件被多个业务域共享也只计一次。"""
+        from app.services.dq_incident_attribution import DqIncidentAttributionService
+
+        service = DqIncidentAttributionService()
+        if group:
+            return service.group_report(group)
+        return service.build_daily_report()
+
     def aggregate_quality_report(self, period: str = "daily") -> dict[str, Any]:
         """聚合全量巡检结果和质量事件，生成多维度质量分析报告。
 

@@ -96,6 +96,10 @@ class DqIncidentService(BaseModuleService):
         }
         rows.append(entry)
 
+        # 写入事件后同步归属记录：规则能定位到表字段时按业务域拆分，
+        # 定位不到的存量异常留在归属服务的待复核队列。
+        self._sync_attribution(entry["事件编号"])
+
         # 关联写入趋势记录
         trend_rows = store.rows("dq_trend")
         new_tid = max((int(r.get("id", 0)) for r in trend_rows), default=0) + 1
@@ -116,6 +120,15 @@ class DqIncidentService(BaseModuleService):
 
         return entry
 
+    def _sync_attribution(self, incident_no: str) -> None:
+        """事件写入后同步归属；归属失败不影响事件本身落库。"""
+        try:
+            from app.services.dq_incident_attribution import DqIncidentAttributionService
+
+            DqIncidentAttributionService().sync_incident(incident_no)
+        except Exception:  # noqa: BLE001 - 归属是旁路能力，不能回滚事件写入
+            pass
+
     def analyze_incident_trend(self, table_name: str) -> dict[str, Any]:
         """分析质量事件趋势并计算改善评分。
 
@@ -126,7 +139,14 @@ class DqIncidentService(BaseModuleService):
         related = [i for i in all_incidents if table_name in str(i.get("关联规则", ""))]
 
         if not related:
-            return {"目标表名": table_name, "状态": "无历史事件", "趋势": "平稳"}
+            return {
+                "目标表名": table_name,
+                "状态": "无历史事件",
+                "趋势": "平稳",
+                "趋势方向": "平稳",
+                "历史事件总数": 0,
+                "修复率": "N/A",
+            }
 
         resolved = sum(1 for i in related if i.get("status") in ("已修复", "已关闭"))
         resolution_rate = resolved / len(related) * 100 if related else 0
